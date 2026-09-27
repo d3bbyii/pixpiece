@@ -3,7 +3,7 @@ import CameraStage from './components/CameraStage.jsx';
 import PuzzleBoard from './components/PuzzleBoard.jsx';
 import ResultView from './components/ResultView.jsx';
 import { Btn, PixelIcon, Slot, ToolBtn, Win } from './components/Win.jsx';
-import { hasCameraApi, isDesktop } from './lib/device.js';
+import { getLayout, hasCameraApi, isPhoneLandscape, isTouch } from './lib/device.js';
 import { THEMES } from './lib/image.js';
 import { loadRecognizer } from './lib/recognizer.js';
 
@@ -26,18 +26,26 @@ const TITLE = {
   error: 'Pixpiece.exe - Error',
 };
 
-// 整個畫面的設計尺寸；螢幕較小時等比縮小（例如 1366×768 的筆電）
+// wide 版面的設計尺寸；螢幕較小時等比縮小（例如 1366×768 的筆電、橫向平板）
 const SCREEN_W = 1100;
 const SCREEN_H = 740;
-function useFitScale() {
-  const calc = () => Math.min(1, (window.innerWidth - 32) / SCREEN_W, (window.innerHeight - 32) / SCREEN_H);
-  const [scale, setScale] = useState(calc);
+function useViewport() {
+  const calc = () => ({
+    layout: getLayout(),
+    scale: Math.min(1, (window.innerWidth - 32) / SCREEN_W, (window.innerHeight - 32) / SCREEN_H),
+    rotateHint: isPhoneLandscape(),
+  });
+  const [v, setV] = useState(calc);
   useEffect(() => {
-    const onResize = () => setScale(calc());
+    const onResize = () => setV(calc());
     window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
+    };
   }, []);
-  return scale;
+  return v;
 }
 
 function useClock() {
@@ -49,29 +57,9 @@ function useClock() {
   return `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
 }
 
-function MobileGate() {
-  return (
-    <div className="desktop">
-      <Win title="Pixpiece.exe - Error" icon="heart" className="dialog">
-        <div className="dialog-body">
-          <PixelIcon name="camera" size={6} className="dialog-icon" />
-          <div>
-            <p>
-              <b>此程式需要在電腦上執行。</b>
-            </p>
-            <p>Pixpiece 使用 webcam 手勢辨識與滑鼠拖曳拼圖，請用桌機或筆電的 Chrome、Edge 開啟這個網址。</p>
-            <p className="muted">視窗寬度至少 1024 px。</p>
-          </div>
-        </div>
-      </Win>
-    </div>
-  );
-}
-
 let logId = 0;
 
 export default function App() {
-  const [desktop] = useState(isDesktop);
   const [phase, setPhase] = useState('loading');
   const [model, setModel] = useState(null); // { recognizer, delegate } | null
   const [modelError, setModelError] = useState(null);
@@ -86,7 +74,8 @@ export default function App() {
   const [toolsEl, setToolsEl] = useState(null);
   const [statusEl, setStatusEl] = useState(null);
   const logRef = useRef(null);
-  const scale = useFitScale();
+  const { layout: ui, scale, rotateHint } = useViewport();
+  const touch = isTouch();
   const clock = useClock();
 
   const log = useCallback((text) => {
@@ -100,7 +89,6 @@ export default function App() {
   }, [logs]);
 
   useEffect(() => {
-    if (!desktop) return undefined;
     let alive = true;
     setPhase('loading');
     setModelError(null);
@@ -121,9 +109,7 @@ export default function App() {
     return () => {
       alive = false;
     };
-  }, [desktop, retryKey, log]);
-
-  if (!desktop) return <MobileGate />;
+  }, [retryKey, log]);
 
   function startCamera() {
     if (!hasCameraApi()) {
@@ -157,8 +143,9 @@ export default function App() {
   const aiLabel = model ? `AI: ${model.delegate}` : phase === 'loading' ? 'AI: 載入中' : 'AI: 手動模式';
 
   return (
-    <div className="desktop">
-      <div className="screen" style={{ transform: `scale(${scale})` }}>
+    <div className={`desktop ${ui}`}>
+      {rotateHint && <div className="rotate-hint">轉成直向拿手機，畫面會比較大喔 ↻</div>}
+      <div className={`screen ${ui}`} style={ui === 'wide' ? { transform: `scale(${scale})` } : undefined}>
         {/* ---------- 主視窗 ---------- */}
         <Win title={TITLE[phase]} icon="cam" className="main-win">
           <nav className="menubar" aria-hidden="true">
@@ -228,6 +215,7 @@ export default function App() {
                   photo={photo}
                   stats={stats}
                   theme={theme}
+                  touch={touch}
                   prefs={prefs}
                   setPrefs={setPrefs}
                   onRetake={startCamera}

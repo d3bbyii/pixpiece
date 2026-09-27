@@ -1,4 +1,5 @@
 :root {
+  --board-size: 500px; /* 相機預覽與拼圖盤的邊長，手機版會改小 */
   --rose: #b24a5e; /* 描邊、文字 */
   --rose-soft: #e3a3b2; /* 陰影、次要線條 */
   --pink: #f9d2df; /* 視窗底色 */
@@ -91,7 +92,17 @@ b {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
   white-space: nowrap;
+}
+
+.win-title-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.win-controls {
+  flex: none;
 }
 
 .win-controls {
@@ -416,6 +427,16 @@ b {
 }
 
 /* ---------- 按鈕、進度條 ---------- */
+.btn,
+.tool,
+.swatch,
+.filter-btn,
+.start-btn {
+  touch-action: manipulation; /* 避免手機連點放大 */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
 .btn {
   min-height: 34px;
   padding: 6px 16px;
@@ -588,8 +609,8 @@ b {
 /* ---------- 相機 ---------- */
 .viewfinder {
   position: relative;
-  width: 500px;
-  height: 500px;
+  width: var(--board-size);
+  height: var(--board-size);
   flex: none;
   overflow: hidden;
   background: #2a1a2a;
@@ -747,6 +768,8 @@ b {
 /* ---------- 拼圖 ---------- */
 .board {
   position: relative;
+  width: var(--board-size);
+  height: var(--board-size);
   display: grid;
   gap: 3px;
   padding: 3px;
@@ -938,4 +961,242 @@ b {
   height: 0;
   border-top: 2px dashed var(--rose-soft);
   margin: 2px 0;
+}
+
+/* ---------- 手機橫拿提示 ---------- */
+.rotate-hint {
+  position: fixed;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  padding: 6px 14px;
+  color: var(--rose);
+  background: var(--pink-2);
+  border: 2px solid var(--rose);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   compact：手機與直向平板的直式單欄版面
+   ========================================================= */
+.desktop.compact {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  min-height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+body:has(.desktop.compact) {
+  overflow: auto;
+}
+
+.screen.compact {
+  --board-size: min(calc(100vw - 52px), 56dvh, 640px);
+  width: 100%;
+  max-width: 720px;
+  height: auto;
+  margin: auto; /* 平板直向時垂直置中，內容較長時自然往下捲 */
+  padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transform: none;
+}
+
+.compact .win {
+  padding: 6px;
+  box-shadow:
+    inset 0 0 0 3px var(--pink),
+    inset 0 0 0 5px var(--rose),
+    4px 4px 0 rgba(178, 74, 94, 0.18);
+}
+
+.compact .win-title {
+  height: 32px;
+  font-size: 23px;
+}
+
+.compact .win-ctl {
+  width: 22px;
+  height: 20px;
+  font-size: 18px;
+}
+
+.compact .menubar {
+  display: none;
+}
+
+.compact .main-body {
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto auto;
+  margin-top: 6px;
+}
+
+/* 工具列：移到畫面下方，橫向排列可滑動 */
+.compact .toolbox {
+  grid-row: 2;
+  flex-direction: row;
+  justify-content: flex-start;
+  overflow-x: auto;
+  padding: 5px;
+  scrollbar-width: none;
+}
+
+.compact .toolbox::-webkit-scrollbar {
+  display: none;
+}
+
+.compact .tool {
+  flex: none;
+  width: 62px;
+  height: 54px;
+}
+
+.compact .tool-sep {
+  width: 0;
+  height: 44px;
+  border-top: 0;
+  border-left: 2px dashed var(--rose-soft);
+  margin: 0 2px;
+  align-self: center;
+}
+
+.compact .stage-area {
+  grid-row: 1;
+  padding: 8px;
+  min-height: calc(var(--board-size) + 22px);
+}
+
+.compact .palette-row {
+  grid-row: 3;
+  height: 48px;
+  gap: 8px;
+  padding: 0 6px;
+  overflow-x: auto;
+}
+
+.compact .palette-current {
+  display: none;
+}
+
+.compact .swatch {
+  flex: none;
+  width: 32px;
+  height: 32px;
+}
+
+.compact .palette-label {
+  display: none;
+}
+
+/* 開始畫面 */
+.compact .logo {
+  font-size: min(15vw, 72px);
+}
+
+.compact .how {
+  font-size: 13px;
+  padding: 8px 14px 8px 32px;
+}
+
+.compact .center-panel {
+  gap: 12px;
+  padding: 12px 6px;
+}
+
+/* 右側視窗：狀態縮成精簡卡片，紀錄視窗隱藏 */
+.compact .side {
+  gap: 8px;
+}
+
+.compact .status-win {
+  height: auto;
+}
+
+.compact .status-body {
+  margin-top: 6px;
+  padding: 10px;
+  gap: 8px;
+}
+
+.compact .kv.big {
+  grid-template-columns: auto 1fr auto 1fr;
+  gap: 2px 10px;
+}
+
+.compact .kv.big dd {
+  font-size: 24px;
+}
+
+.compact .log-win {
+  display: none;
+}
+
+/* 相機 / 倒數 */
+.compact .countdown {
+  font-size: calc(var(--board-size) * 0.5);
+}
+
+.compact .rec {
+  top: 12px;
+  left: 44px;
+  font-size: 22px;
+}
+
+.compact .corner {
+  width: 26px;
+  height: 26px;
+}
+
+.compact .hint-pop {
+  font-size: 13px;
+  bottom: 14px;
+}
+
+/* 結果頁：預覽在上，濾鏡在下 */
+.compact .result-wrap {
+  flex-direction: column;
+  width: 100%;
+}
+
+.compact .result-preview {
+  width: auto;
+  height: auto;
+}
+
+.compact .card-img {
+  height: auto;
+  width: min(calc(100vw - 60px), calc(56dvh * 900 / 1100), 460px);
+}
+
+.compact .result-side {
+  width: 100%;
+}
+
+.compact .filter-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.compact .filter-btn img,
+.compact .filter-btn .thumb-empty {
+  width: 64px;
+  height: 64px;
+}
+
+.compact .solved-banner {
+  font-size: 24px;
+  padding: 10px 14px;
+}
+
+/* 底部狀態列：只留 START 和步驟 */
+.compact .bottombar {
+  padding: 4px 6px;
+}
+
+.compact .bar-field:not(:first-of-type) {
+  display: none;
 }

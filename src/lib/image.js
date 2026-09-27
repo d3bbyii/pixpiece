@@ -58,19 +58,34 @@ export function dateStamp(d = new Date()) {
   return `'${String(d.getFullYear()).slice(2)} ${pad(d.getMonth() + 1)} ${pad(d.getDate())}`;
 }
 
-export function downloadCanvas(canvas) {
-  return new Promise((resolve) => {
-    canvas.toBlob((blob) => {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      const d = new Date();
-      a.href = url;
-      a.download = `pixpiece-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}.png`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      resolve();
-    }, 'image/png');
-  });
+/**
+ * 儲存拍貼。
+ * 手機 / 平板：優先開啟系統分享選單（可直接「儲存影像」到相簿）
+ * 電腦或不支援分享時：一般檔案下載
+ * 回傳 'shared' | 'download' | 'cancelled'
+ */
+export async function downloadCanvas(canvas) {
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+  const d = new Date();
+  const name = `pixpiece-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}.png`;
+  const file = new File([blob], name, { type: 'image/png' });
+  const touch = window.matchMedia?.('(pointer: coarse)').matches;
+  if (touch && navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: 'Pixpiece.exe' });
+      return 'shared';
+    } catch (err) {
+      if (err?.name === 'AbortError') return 'cancelled'; // 使用者關掉分享選單
+      // 其他錯誤：改用一般下載
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return 'download';
 }

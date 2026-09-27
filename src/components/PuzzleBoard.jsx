@@ -4,7 +4,6 @@ import { formatTime } from '../lib/image.js';
 import { Slot, ToolBtn } from './Win.jsx';
 import { DIFFICULTIES } from '../config.js';
 
-const BOARD_PX = 500;
 const DRAG_THRESHOLD = 6;
 
 function pieceStyle(piece, n, photo) {
@@ -90,7 +89,8 @@ export default function PuzzleBoard({ photo, onSolved, onRetake, slots, log }) {
     const idx = cellAt(e.clientX, e.clientY);
     if (idx === null) return;
     boardRef.current.setPointerCapture(e.pointerId);
-    setDrag({ from: idx, over: idx, sx: e.clientX, sy: e.clientY, ...localPoint(e), moved: false });
+    const cell = (boardRef.current.clientWidth - 6) / n; // 盤面大小依裝置而定（CSS 變數 --board-size）
+    setDrag({ from: idx, over: idx, sx: e.clientX, sy: e.clientY, ...localPoint(e), cell, moved: false });
   }
 
   function onPointerMove(e) {
@@ -117,7 +117,6 @@ export default function PuzzleBoard({ photo, onSolved, onRetake, slots, log }) {
     }
   }
 
-  const cell = BOARD_PX / n;
   const elapsed = now - startedAt;
   const correct = correctCount(board);
 
@@ -126,7 +125,7 @@ export default function PuzzleBoard({ photo, onSolved, onRetake, slots, log }) {
       <div
         ref={boardRef}
         className={`board ${solved ? 'is-solved' : ''} ${drag?.moved ? 'is-dragging' : ''}`}
-        style={{ width: BOARD_PX, height: BOARD_PX, gridTemplateColumns: `repeat(${n}, 1fr)` }}
+        style={{ gridTemplateColumns: `repeat(${n}, 1fr)`, gridTemplateRows: `repeat(${n}, 1fr)` }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -152,10 +151,10 @@ export default function PuzzleBoard({ photo, onSolved, onRetake, slots, log }) {
             className="tile ghost"
             style={{
               ...pieceStyle(board[drag.from], n, photo),
-              width: cell,
-              height: cell,
-              left: drag.x - cell / 2,
-              top: drag.y - cell / 2,
+              width: drag.cell,
+              height: drag.cell,
+              left: drag.x - drag.cell / 2,
+              top: drag.y - drag.cell / 2,
             }}
           />
         )}
@@ -179,6 +178,7 @@ export default function PuzzleBoard({ photo, onSolved, onRetake, slots, log }) {
           label="偷看"
           disabled={solved}
           onPointerDown={() => setPeek(true)}
+          onContextMenu={(e) => e.preventDefault()}
           onPointerUp={() => setPeek(false)}
           onPointerLeave={() => setPeek(false)}
         />

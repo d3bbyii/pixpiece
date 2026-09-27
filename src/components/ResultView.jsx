@@ -8,7 +8,7 @@ import { Slot, ToolBtn } from './Win.jsx';
  * 結果頁：選版型（左側工具列）、濾鏡（右側縮圖）、配色（下方色盤），預覽並下載
  * prefs = { layout, filter, caption }，由 App 保存，重拍後仍沿用
  */
-export default function ResultView({ photo, stats, theme, prefs, setPrefs, onRetake, slots, log }) {
+export default function ResultView({ photo, stats, theme, touch, prefs, setPrefs, onRetake, slots, log }) {
   const [filtered, setFiltered] = useState(null); // { key: canvas }
   const [thumbs, setThumbs] = useState({}); // { key: dataURL }
   const [preview, setPreview] = useState(null);
@@ -104,11 +104,12 @@ export default function ResultView({ photo, stats, theme, prefs, setPrefs, onRet
       <Slot target={slots.tools}>
         <ToolBtn
           icon="save"
-          label="下載"
+          label={touch ? '儲存' : '下載'}
           disabled={!preview}
           onClick={async () => {
-            await downloadCanvas(canvasRef.current);
-            log('拍貼已下載 ♥');
+            const how = await downloadCanvas(canvasRef.current);
+            if (how === 'shared') log('拍貼已分享 / 儲存 ♥');
+            else if (how === 'download') log('拍貼已下載 ♥');
           }}
         />
         <ToolBtn icon="retake" label="再拍" onClick={onRetake} />

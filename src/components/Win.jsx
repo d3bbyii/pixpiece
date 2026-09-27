@@ -47,7 +47,7 @@ export function Win({ title, icon = 'cam', children, className = '', style }) {
       <header className="win-title">
         <span className="win-title-text">
           <PixelIcon name={icon} size={3} />
-          {title}
+          <span className="win-title-label">{title}</span>
         </span>
         <span className="win-controls" aria-hidden="true">
           <span className="win-ctl">_</span>
