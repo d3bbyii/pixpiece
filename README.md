@@ -2,7 +2,7 @@
 
 > Say cheese, piece by piece ♥
 
-Y2K 手勢拍貼拼圖網頁（桌機版）
+Y2K 手勢拍貼拼圖網頁（電腦・平板・手機）
 
 比 ✌ YA 自動拍照 → 把打亂的照片拼回來 → 下載 Y2K 拍貼。全部在瀏覽器內完成，影像不會上傳。
 
@@ -45,7 +45,7 @@ src/
     recognizer.js           MediaPipe GestureRecognizer 單例（GPU → CPU 備援）
     camera.js               開關相機、錯誤訊息
     image.js                鏡像正方形擷取、拍貼卡合成、PNG 下載
-    device.js               桌機判斷（網址加 ?force 可略過，測試用）
+    device.js               版面判斷 wide / compact（網址加 ?layout=compact 可強制手機版，測試用）
 ```
 
 ## 調整手感
@@ -63,4 +63,11 @@ src/
 
 ## 瀏覽器支援
 
-Chrome / Edge 110+（主要）、Firefox 115+、macOS Safari 16.4+。手機與平板會顯示「請用電腦開啟」。
+Chrome / Edge 110+、Firefox 115+、Safari 16.4+（含 iPhone / iPad）。
+
+| 裝置 | 版面 | 儲存拍貼 |
+| --- | --- | --- |
+| 電腦、橫向平板 | 多視窗桌面（小螢幕自動等比縮小） | 下載 PNG |
+| 手機、直向平板 | 直式單欄，工具列與色盤可橫向滑動 | 分享選單，可直接存入相簿 |
+
+手機和平板要用 HTTPS 開啟才能使用相機（部署到 Vercel 即可；本機測試可用 `npm run dev -- --host` 搭配同網段的 HTTPS 通道）。
